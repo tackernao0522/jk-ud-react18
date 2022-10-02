@@ -80,3 +80,208 @@ reportWebVitals();
 ```:console
 Warning: ReactDOM.render is no longer supported in React 18. Use createRoot instead. Until you switch to the new API, your app will behave as if it's running React 17.
 ```
+
+## 09. StrictModeの挙動
+
++ [Strict モードの新たな挙動](https://ja.reactjs.org/blog/2022/03/29/react-v18.html) <br>
+
++ `react18-explanation-react17/src/App.tsx`を編集<br>
+
+```tsx:App.tsx
+import React from 'react';
+import logo from './logo.svg';
+import './App.css';
+
+function App() {
+  console.log('Appがレンダリングされた！！') // 追加
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.tsx</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
++ 開発ツールを確認する<br>
+
+```:console
+Appがレンダリングされた！！
+```
+
++ `react18-explanation-react18/src/App.tsx`を編集<br>
+
+```tsx:App.tsx
+import React from "react";
+import logo from "./logo.svg";
+import "./App.css";
+
+function App() {
+  console.log("Appがレンダリングされた！！"); // 追加
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.tsx</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
++ 開発ツールを確認する<br>
+
+```:console
+Appがレンダリングされた！！
+Appがレンダリングされた！！
+// 一度破棄してもう一度レンダリングされる仕組み
+```
+
++ `react18-explanation-react17/src/App.tsx`を編集(最初の一回のレンダリングをuseEffectで表示)<br>
+
+```tsx:App.tsx
+import React, { useEffect } from "react";
+import logo from "./logo.svg";
+import "./App.css";
+
+function App() {
+  // 追加
+  useEffect(() => {
+    console.log("useEffect！！");
+  }, []); // から配列にすると最初の一回のみ実行される
+  // ここまで
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.tsx</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
++ 開発ツールを確認する<br>
+
+```:console
+useEffect！！
+```
+
++ `react18-explanation-react18/src/App.tsx`を編集(useEffectで表示 一回レンダリングされたのを一度破棄されて再表示)<br>
+
+```tsx:App.tsx
+import React, { useEffect } from "react";
+import logo from "./logo.svg";
+import "./App.css";
+
+function App() {
+  // 追加
+  useEffect(() => {
+    console.log("useEffect！！");
+  }, []);
+  // ここまで
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p>
+          Edit <code>src/App.tsx</code> and save to reload.
+        </p>
+        <a
+          className="App-link"
+          href="https://reactjs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Learn React
+        </a>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
++ 開発ツールを確認する<br>
+
+```:console
+useEffect！！
+useEffect！！
+```
+
++ 上記のReact18の挙動は`StrictMode`を採用してる時のみに起きる挙動である。<br>
+
+
++ `react18-explanation-react18/src/index.tsx`を編集 (確認後戻す)<br>
+
+```tsx:index.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(
+  document.getElementById('root') as HTMLElement
+);
+root.render(
+  // <React.StrictMode> // コメントアウト
+    <App />
+  // </React.StrictMode> // コメントアウト
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+```
+
++ 開発ツールを確認する<br>
+
+```:console
+useEffect！！
+// 一度のみのレンダリングになる
+```
+
+* StrictModeでもbuildを行って本番環境では一度のみのレンダリングになる<br>
