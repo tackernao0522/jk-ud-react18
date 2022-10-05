@@ -164,3 +164,121 @@ AutoBatchOter
 ```
 
 + React18の場合、イベントハンドラ外の複数関数があっても再レンダリングが一度のみになっていて自動バッチ処理が施されている<br>
+
+## 13. flushSync(バッチ処理を拒否する)
+
++ `react18-explanation-react18/src/components/AutoBatchEventHandler.tsx`を編集<br>
+
+```tsx:AutoBatchEventHandler.tsx
+import { useState } from "react";
+import { flushSync } from "react-dom"; // 追加
+
+export const AutoBatchEventHandler = () => {
+  console.log("AutoBatchEventHandler");
+
+  const [state1, setState1] = useState<number>(0);
+  const [state2, setState2] = useState<number>(0);
+
+  const onClickUpdateButton = () => {
+    console.log(state1);
+    // 編集
+    flushSync(() => {
+      setState1(state1 => state1 + 1); // バッチ処理しなくない対象の関数を記述
+    });
+    // ここまで
+    console.log(state1);
+    setState2(state2 => state2 + 1);
+  };
+
+  return (
+    <div>
+      <p>Auto Batching確認用(イベントハンドラ)</p>
+      <button onClick={onClickUpdateButton}>State更新！</button>
+      <p>
+        State1: {state1}
+      </p>
+      <p>
+        State2: {state2}
+      </p>
+    </div>
+  );
+};
+```
+
++ 再レンダリングの挙動を確認する(state1は毎回再レンダリングされるようになる)<br>
+
+```:console
+0
+AutoBatchEventHandler
+0
+AutoBatchEventHandler
+1
+AutoBatchEventHandler
+1
+AutoBatchEventHandler
+2
+AutoBatchEventHandler
+2
+AutoBatchEventHandler
+3
+AutoBatchEventHandler
+3
+AutoBatchEventHandler
+```
+
++ `react18-explanation-react18/src/components/AutoBatchOter.tsx`を編集<br>
+
+```tsx:AutoBatchOter.tsx
+import { useState } from "react";
+import { flushSync } from "react-dom"; // 追加
+
+type Todo = {
+  userId: number;
+  id: number;
+  title: string;
+  completed: boolean;
+};
+
+export const AutoBatchOther = () => {
+  console.log('AutoBatchOter');
+
+  const [todos, setTodos] = useState<Todo[] | null>(null);
+  const [isFinishApi, setIsFinishApi] = useState<boolean>(false);
+  const [, setState3] = useState<string>('');
+
+  const onClickExecuteApi = () => {
+    fetch("https://jsonplaceholder.typicode.com/todos")
+      .then(res => res.json())
+      .then(data => {
+        // 編集
+        flushSync(() => {
+          setTodos(data); // バッチ処理したくない関数
+        })
+        // ここまで
+        setIsFinishApi(true);
+        setState3('updated');
+      });
+  };
+
+  return (
+    <div>
+      <p>Automatic Batching確認用（その他）</p>
+      <button onClick={onClickExecuteApi}>API実行！</button>
+      <p>isFinishApi: {isFinishApi ? 'true' : 'false'}</p>
+      {todos?.map((todo) => (
+        <p key={todo.id}>{todo.title}</p>
+      ))}
+    </div>
+  );
+};
+```
+
++ 挙動を確認<br>
+
+```:console
+AutoBatchOter
+AutoBatchOther.tsx:12 AutoBatchOter
+// 2回レンダリングされる(flushSyncしたsetTodos関数の分)
+```
+
++ 確認後 StrictModeは戻しておく<br>
