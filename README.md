@@ -285,3 +285,308 @@ useEffect！！
 ```
 
 * StrictModeでもbuildを行って本番環境では一度のみのレンダリングになる<br>
+
+# セクション3: Automatic Batching
+
+[新機能：自動バッチング React18](https://ja.reactjs.org/blog/2022/03/29/react-v18.html) <br>
+
+## 11. React17までのバッチ処理の確認
+
++ `$mkdir react18-explanation-react17/src/components && touch $_/AutoBatchEventHandler.tsx`を実行<br>
+
++ `react-explanation-react17/src/components/AutoBatchEventHandler.tsx`を編集<br>
+
+```tsx:AutoBatchEventHandler.tsx
+export const AutoBatchEventHandler = () => {
+  return (
+    <div>
+      <p>Auto Batching確認用(イベントハンドラ)</p>
+    </div>
+  );
+};
+```
+
++ `react18-explanation-react17/src/App.tsx`を編集<br>
+
+```tsx:App.tsx
+import "./App.css";
+import { AutoBatchEventHandler } from "./components/AutoBatchEventHandler";
+
+function App() {
+  return (
+    <div className="App">
+      <AutoBatchEventHandler />
+    </div>
+  );
+}
+
+export default App;
+```
+
++ `react18-explanation-react17/src/components/AutoBatchEventHandler.tsx`を編集<br>
+
+```tsx:AutoBatchEventHandler.tsx
+import { useState } from "react";
+
+export const AutoBatchEventHandler = () => {
+  const [state1, setState1] = useState<number>(0);
+  const [state2, setState2] = useState<number>(0);
+
+  const onClickUpdateButton = () => {
+    // (state1 + 1)でも同じ挙動を示すが ((state1) => state + 1)とした方が今現在のstate1を更新するのでこれのが安全である
+    setState1(state1 => state1 + 1);
+    setState2(state2 => state2 + 1);
+  };
+
+  return (
+    <div>
+      <p>Auto Batching確認用(イベントハンドラ)</p>
+      <button onClick={onClickUpdateButton}>State更新！</button>
+      <p>
+        State1: {state1}
+      </p>
+      <p>
+        State2: {state2}
+      </p>
+    </div>
+  );
+};
+```
+
++ `react18-explanation-react17/src/components/AutoBatchEventHandler.tsx`を編集<br>
+
+```tsx:AutoBatchEventHandler.tsx
+import { useState } from "react";
+
+export const AutoBatchEventHandler = () => {
+  console.log('AutoBatchEventHandler')
+
+  const [state1, setState1] = useState<number>(0);
+  const [state2, setState2] = useState<number>(0);
+
+  const onClickUpdateButton = () => {
+    // イベントハンドラ内のset関数になる
+    console.log(state1) // 追加
+    setState1(state1 => state1 + 1);
+    console.log(state1) // 追加
+    setState2(state2 => state2 + 1);
+  };
+
+  return (
+    <div>
+      <p>Auto Batching確認用(イベントハンドラ)</p>
+      <button onClick={onClickUpdateButton}>State更新！</button>
+      <p>
+        State1: {state1}
+      </p>
+      <p>
+        State2: {state2}
+      </p>
+    </div>
+  );
+};
+```
+
++ コンソールを確認して挙動を見てみる<br>
+
+```:console
+AutoBatchEventHandler
+0
+0
+AutoBatchEventHandler
+1
+1
+AutoBatchEventHandler
+2
+2
+AutoBatchEventHandler
+3
+3
+AutoBatchEventHandler
+4
+4
+AutoBatchEventHandler
+```
+
++ $touch react18-explanation-react17/src/components/AutoBatchOther.tsx`を実行<br>
+
++ `react18-explanation-react17/src/components/AutoBatchOther.tsx`を編集<br>
+
+```tsx:AutoBatchOther.tsx
+export const AutoBatchOther = () => {
+  return (
+    <div>
+      <p>Automatic Batching確認用（その他）</p>
+    </div>
+  );
+};
+```
+
++ `react18-explanation-react17/src/App.tsx`を編集<br>
+
+```tsx:App.tsx
+import "./App.css";
+import { AutoBatchEventHandler } from "./components/AutoBatchEventHandler";
+import { AutoBatchOther } from "./components/AutoBatchOther"; // 追加
+
+function App() {
+  return (
+    <div className="App">
+      <AutoBatchEventHandler />
+      <AutoBatchOther /> // 追加
+    </div>
+  );
+}
+
+export default App;
+```
+
++ [Json place holder](https://jsonplaceholder.typicode.com/todos) を使ってみる<br>
+
++ `react18-explanation-react17/src/components/AutoBatchOther.tsx`を編集<br>
+
+```tsx:AutoBatchOther.tsx
+import { useState } from "react";
+
+type Todo = {
+  userId: number;
+  id: number;
+  title: string;
+  completed: boolean;
+};
+
+export const AutoBatchOther = () => {
+  const [todos, setTodos] = useState<Todo[] | null>(null);
+  const [isFinishApi, setIsFinishApi] = useState<boolean>(false);
+
+  const onClickExecuteApi = () => {
+    fetch("https://jsonplaceholder.typicode.com/todos")
+      .then(res => res.json())
+      .then(data => {
+        // この場合バッチ処理されていない
+        setTodos(data);
+        setIsFinishApi(true);
+      });
+  };
+
+  return (
+    <div>
+      <p>Automatic Batching確認用（その他）</p>
+      <button onClick={onClickExecuteApi}>API実行！</button>
+      <p>isFinishApi: {isFinishApi ? 'true' : 'false'}</p>
+      {todos?.map((todo) => (
+        <p key={todo.id}>{todo.title}</p>
+      ))}
+    </div>
+  );
+};
+```
+
++ `API実行！`ボタンをクリックして確認してみる<br>
+
++ `react18-explanation-react17/src/components/AutoBatchOther.tsx`を編集(バッチ処理されていない確認)<br>
+
+```tsx:AutoBatchOther.tsx
+import { useState } from "react";
+
+type Todo = {
+  userId: number;
+  id: number;
+  title: string;
+  completed: boolean;
+};
+
+export const AutoBatchOther = () => {
+  console.log('AutoBatchOter'); // 追加
+
+  const [todos, setTodos] = useState<Todo[] | null>(null);
+  const [isFinishApi, setIsFinishApi] = useState<boolean>(false);
+
+  const onClickExecuteApi = () => {
+    fetch("https://jsonplaceholder.typicode.com/todos")
+      .then(res => res.json())
+      .then(data => {
+        // 以下はイベントハンドラ外のset関数になる
+        setTodos(data);
+        setIsFinishApi(true);
+      });
+  };
+
+  return (
+    <div>
+      <p>Automatic Batching確認用（その他）</p>
+      <button onClick={onClickExecuteApi}>API実行！</button>
+      <p>isFinishApi: {isFinishApi ? 'true' : 'false'}</p>
+      {todos?.map((todo) => (
+        <p key={todo.id}>{todo.title}</p>
+      ))}
+    </div>
+  );
+};
+```
+
++ `API実行！`ボタンをクリックして(コンソール)確認してみる<br>
+
+```:console
+AutoBatchOter
+AutoBatchOter
+```
+
+```
+結果: AutoBatchEventHandlerコンポーネントの方はイベントハンドラの中であり自動バッチ処理されていて再レンダリングは一度のみだが、
+     AutoBatchOterコンポーネントの方はイベントハンドラ以外で複数set関数を呼んでいるため自動バッチ処理されていないので再レンダリングが2度(set関数を呼んだ分だけ再レンダリング)されてしまっている。
+```
+
++ 試しに `react18-explanation-react17/src/components/AutoBatchOther.tsx`<br>
+
+```tsx:AutoBatchOther.tsx
+import { useState } from "react";
+
+type Todo = {
+  userId: number;
+  id: number;
+  title: string;
+  completed: boolean;
+};
+
+export const AutoBatchOther = () => {
+  console.log('AutoBatchOter');
+
+  const [todos, setTodos] = useState<Todo[] | null>(null);
+  const [isFinishApi, setIsFinishApi] = useState<boolean>(false);
+  const [, setState3] = useState<string>(''); // 追加
+
+  const onClickExecuteApi = () => {
+    fetch("https://jsonplaceholder.typicode.com/todos")
+      .then(res => res.json())
+      .then(data => {
+        setTodos(data);
+        setIsFinishApi(true);
+        setState3('updated'); // 追加
+      });
+  };
+
+  return (
+    <div>
+      <p>Automatic Batching確認用（その他）</p>
+      <button onClick={onClickExecuteApi}>API実行！</button>
+      <p>isFinishApi: {isFinishApi ? 'true' : 'false'}</p>
+      {todos?.map((todo) => (
+        <p key={todo.id}>{todo.title}</p>
+      ))}
+    </div>
+  );
+};
+```
+
++ 挙動を確認してみる(やはり3回再レンダリングされている)<br>
+
+```:console
+AutoBatchOter
+AutoBatchOter
+AutoBatchOter
+```
+
++ 以上がReact17の自動バッチ処理の挙動であり、イベントハンドラ外での関数処理は再レンダリングが定義した分だけされてしまう。<br>
+
++ React18ではこれが改善されている<br>
