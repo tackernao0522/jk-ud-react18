@@ -1,4 +1,13 @@
-import { useState, startTransition } from "react";
+## 16. Transitionが解決する問題 / startTransition
+
++ `chrome` => `検証ツール` => `Peformance insights` => `No throtting` => `CPU` => `6 x slowdown` => `Disable cache` => `チェック外す` (これで擬似的にPC性能を下げる)<br>
+
++ この状態でフィルタリング処理を行なってみる `A`をクリックしてみる `B`をクリックしてみる `C`をクリックしてみる(相当に遅くなる)<br>
+
++ `src/components/Transition.tsx`を編集<br>
+
+```tsx:Transition.tsx
+import { useState, startTransition } from "react"; // 編集
 import { Avatar } from "./Avatar";
 
 type Task = {
@@ -43,6 +52,7 @@ export const Transition = () => {
   const onClickAssignee = (assignee: string) => {
     // alert(assignee);
     setSelectedAssignee(assignee);
+    // 編集
     startTransition(() => {
       setTaskList(filteringAssignee(assignee)); // 緊急性の高くない方を入れる
     });
@@ -72,7 +82,7 @@ export const Transition = () => {
         </Avatar>
       </div>
       <br />
-      <button onClick={() => onClickAssignee("")}>リセット</button>
+      <button onClick={() => onClickAssignee('') }>リセット</button>
       {taskList.map(task =>
         <div
           key={task.id}
@@ -89,3 +99,8 @@ export const Transition = () => {
     </div>
   );
 };
+```
+
++ `この状態で試してみると ボタンの反映(A, B, c (setSelectedAssingee))は優先して速くなる(Task(setTaskList)は優先度低くしているので遅い)`
+
++ この状態だとTaskListがフィルタリング表示されるまでユーザーが分からない状態なのでそこをなんとかしたい<br>
