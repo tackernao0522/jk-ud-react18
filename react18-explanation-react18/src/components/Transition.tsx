@@ -1,4 +1,4 @@
-import { useState, startTransition } from "react";
+import { useState, useTransition } from "react";
 import { Avatar } from "./Avatar";
 
 type Task = {
@@ -37,6 +37,8 @@ const filteringAssignee = (assignee: string) => {
 };
 
 export const Transition = () => {
+  const [isPending, startTransition] = useTransition();
+
   const [selectedAssignee, setSelectedAssignee] = useState<string>(""); // 押された担当者
   const [taskList, setTaskList] = useState<Task[]>(tasks); // Taskの型の配列になる
 
@@ -76,7 +78,7 @@ export const Transition = () => {
       {taskList.map(task =>
         <div
           key={task.id}
-          style={{ width: "300px", margin: "auto", background: "lavender" }}
+          style={{ width: "300px", margin: "auto", background: "lavender", opacity: isPending ? 0.5 : 1 }}
         >
           <p>
             タイトル: {task.title}
