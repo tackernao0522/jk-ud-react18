@@ -184,12 +184,6 @@ export default App;
 + `src/components/ReactQuery.tsx`を編集<br>
 
 ```tsx:ReactQuery.tsx
-
-```
-
-+ `react18-explanation-react18/src/components/Transition.tsx`を編集(Suspenseを実装しないコード例)<br>
-
-```tsx:Transition.tsx
 import { useQuery } from "@tanstack/react-query"; // 追加
 import axios from "axios"; // 追加
 
@@ -226,4 +220,3 @@ export const ReactQuery = () => {
 ```
 
 + localhost:3000 で確認してみる<br>
-
