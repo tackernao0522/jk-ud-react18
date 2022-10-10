@@ -220,3 +220,178 @@ export const ReactQuery = () => {
 ```
 
 + localhost:3000 で確認してみる<br>
+
+## 23. 基本的なSuspenseの実装
+
++ `src/App.tsx`を編集<br>
+
+```tsx:App.tsx
+import { Suspense } from "react"; // 追加
+import "./App.css";
+import { AutoBatchEventHandler } from "./components/AutoBatchEventHandler";
+import { AutoBatchOther } from "./components/AutoBatchOther";
+import { ReactQuery } from "./components/ReactQuery";
+import { Transition } from "./components/Transition";
+
+function App() {
+  return (
+    <div className="App">
+      <AutoBatchEventHandler />
+      <AutoBatchOther />
+      <hr />
+      <Transition />
+      <hr />
+      <Suspense fallback={<p>ローディング中だよ〜</p>}> // 追加
+        <ReactQuery />
+      </Suspense> // 追加
+    </div>
+  );
+}
+
+export default App;
+```
+
++ `src/components/ReactQuery.tsx`を編集<br>
+
+```tsx:ReactQuery.tsx
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+type Album = {
+  userId: number;
+  id: number;
+  title: string;
+};
+
+const fetchAlbums = async () => {
+  const result = await axios.get<Album[]>(
+    "https://jsonplaceholder.typicode.com/albums"
+  );
+  return result.data;
+};
+
+export const ReactQuery = () => {
+  const { isLoading, error, data } = useQuery<Album[]>(["albums"], fetchAlbums);
+
+  // if (error) return <p>エラーです！</p> コメントアウト
+  // if (isLoading) return <p>ローディング中だよ〜</p> コメントアウト
+
+  return (
+    <div>
+      <p>React Query</p>
+      {data?.map((album) => <p key={album.id}>{album.title}</p>)}
+    </div>
+  );
+};
+```
+
++ localhost:3000 で試してみる (今の状態だとローディング表示されない)<br>
+
++ `src/components/ReactQuery.tsx`を編集<br>
+
+```tsx:ReactQuery.tsx
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+type Album = {
+  userId: number;
+  id: number;
+  title: string;
+};
+
+const fetchAlbums = async () => {
+  const result = await axios.get<Album[]>(
+    "https://jsonplaceholder.typicode.com/albums"
+  );
+  return result.data;
+};
+
+export const ReactQuery = () => {
+  const { isLoading, error, data } = useQuery<Album[]>(["albums"], fetchAlbums, {suspense: true}); // 編集
+
+  // if (error) return <p>エラーです！</p>
+  // if (isLoading) return <p>ローディング中だよ〜</p>
+
+  return (
+    <div>
+      <p>React Query</p>
+      {data?.map((album) => <p key={album.id}>{album.title}</p>)}
+    </div>
+  );
+};
+```
+
++ localhost:3000 で試してみる (ローディングが表示されるようになった)<br>
+
++ `src/components/ReactQuery.tsx`を編集<br>
+
+```tsx:ReactQuery.tsx
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+type Album = {
+  userId: number;
+  id: number;
+  title: string;
+};
+
+const fetchAlbums = async () => {
+  const result = await axios.get<Album[]>(
+    "https://jsonplaceholder.typicode.com/albums"
+  );
+  return result.data;
+};
+
+export const ReactQuery = () => {
+  const { isLoading, error, data } = useQuery<Album[]>(["albums"], fetchAlbums); // 編集
+
+  // if (error) return <p>エラーです！</p>
+  // if (isLoading) return <p>ローディング中だよ〜</p>
+
+  return (
+    <div>
+      <p>React Query</p>
+      {data?.map((album) => <p key={album.id}>{album.title}</p>)}
+    </div>
+  );
+};
+```
+
++ `src/index.tsx`を編集<br>
+
+```tsx:index.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// 編集
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      suspense: true
+    }
+  }
+});
+// ここまで
+
+const root = ReactDOM.createRoot(
+  document.getElementById("root") as HTMLElement
+);
+root.render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </React.StrictMode>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+```
+
++ localhost:3000 で確認してみる (ローディング表示される)<br>
