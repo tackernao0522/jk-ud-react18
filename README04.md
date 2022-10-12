@@ -395,3 +395,75 @@ reportWebVitals();
 ```
 
 + localhost:3000 で確認してみる (ローディング表示される)<br>
+
+## 24. ErrorBoundaryの使用
+
++ `$ yarn add react-error-boundary`を実行<br>
+
++ `react18-explanation-react18/src/App.tsx`を編集<br>
+
+```tsx:App.tsx
+import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary"; // 追加
+import "./App.css";
+import { AutoBatchEventHandler } from "./components/AutoBatchEventHandler";
+import { AutoBatchOther } from "./components/AutoBatchOther";
+import { ReactQuery } from "./components/ReactQuery";
+import { Transition } from "./components/Transition";
+
+function App() {
+  return (
+    <div className="App">
+      <AutoBatchEventHandler />
+      <AutoBatchOther />
+      <hr />
+      <Transition />
+      <hr />
+      <ErrorBoundary fallback={<p>エラーです！</p>}> // 追加
+        <Suspense fallback={<p>ローディング中だよ〜</p>}>
+          <ReactQuery />
+        </Suspense>
+      </ErrorBoundary> // 追加
+    </div>
+  );
+}
+
+export default App;
+```
+
++ `src/components/ReactQuery.tsx`を編集<br>
+
+```tsx:ReactQuery.tsx
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+
+type Album = {
+  userId: number;
+  id: number;
+  title: string;
+};
+
+const fetchAlbums = async () => {
+  const result = await axios.get<Album[]>(
+    "https://jsonplaceholder.typicode.com/albumsxxx" // エラー表示が確認できたら戻す
+  );
+  return result.data;
+};
+
+export const ReactQuery = () => {
+  const { data } = useQuery<Album[]>(["albums"], fetchAlbums); // 編集
+
+  // 削除
+    // ...
+  // ここまで
+
+  return (
+    <div>
+      <p>React Query</p>
+      {data?.map((album) => <p key={album.id}>{album.title}</p>)}
+    </div>
+  );
+};
+```
+
++ localhost:3000 にアクセスしてエラー表示が確認できるかテストしてみる<br>
