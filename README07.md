@@ -147,3 +147,19 @@ Suspense単位でストリーミングされたり、ハイドレーションさ
 
 今後Reactはコンポーネント毎にSSRできるようになるので、Suspenseへの理解は必須になる
 ```
+
+# セクション7: [おまけ] React18で その他 新しく追加されたHooks
+
+## 34. React v18 で追加されたHooks
+
+[React v18 新たなフック](https://ja.reactjs.org/blog/2022/03/29/react-v18.html#new-suspense-features) <br>
+
++ `useId`<br>
+
++ `useTransition`<br>
+
++ `useDeferredValue`<br>
+
++ `useSyncExternalStore`(ほとんど使う機会はない)<br>
+
++ `useInsertionEffect`(ほとんど使う機会はない)<br>
