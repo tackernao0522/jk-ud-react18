@@ -101,3 +101,38 @@ SSR対象のページを表示するには「データの取得」「HTMLの構�
 データ取得とHTMLの構築が出来次第、Suspense単位でHTML要素を返却<br>
 
 SSRなのに特定の範囲毎にHTMLの変更が行われる<br>
+
+## 31. Selective Hydration
+
+### Hydration (ハイドレーション)とは
+
++ サーバー側で生成されたHTMLにJSの各ロジックを接続していくこと<br>
+
+`Client` => `SSR` => `JSの読み込み` => `ハイドレーション`<br>
+
+Suspenseを用いることでこの流れを複数並行で進めるようになる<br>
+
+`例`
+
+```jsx:Sample.jsx
+<div>
+  <Sidebar />
+  <Suspense>
+    <AlbumList />
+  </Suspense>
+  <Suspense>
+    <TodoList />
+  </Suspense>
+</div>
+```
+
+Suspense単位毎にデフォルトでは上から順にハイドレーションされる<br>
+
+### Selective Hydration とは
+
++ 特定のハイドレーション処理を一時中断、別の箇所のハイドレーション処理を優先的に進められる機能<br>
+
+AlbumListのハイドレーション中にユーザーがTodoListのコンテンツエリアをクリックした場合（ユーザーが興味あるのはTodoList）<br>
+
+ReactはAlbumListのハイドレーションを一時中断し、TodoListのハイドレーションを先に行う。<br>
+ユーザーが興味あるコンテンツを最速でインタラクティブな状態にできる。<br>
